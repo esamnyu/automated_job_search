@@ -1,4 +1,3 @@
-// src/services/jobsService.js
 import { 
     collection, 
     addDoc, 
@@ -6,83 +5,113 @@ import {
     deleteDoc, 
     doc, 
     query, 
-    where,
+    where, 
     getDocs,
-    orderBy 
+    serverTimestamp 
   } from 'firebase/firestore';
-  import { db } from '../firebase';
+  import { auth, db } from '../firebase';
   
-  export const jobsService = {
-    // Create a new job application
-    async createJob(userId, jobData) {
+  export const jobService = {
+    async getAllJobs() {
       try {
-        const docRef = await addDoc(collection(db, 'jobs'), {
-          ...jobData,
-          userId,
-          createdAt: new Date().toISOString()
-        });
-        return { id: docRef.id, ...jobData };
-      } catch (error) {
-        console.error('Error creating job:', error);
-        throw error;
-      }
-    },
+        const userId = auth.currentUser?.uid;
+        if (!userId) throw new Error('User not authenticated');
   
-    // Get all jobs for a user
-    async getUserJobs(userId) {
-      try {
-        const q = query(
-          collection(db, 'jobs'),
-          where('userId', '==', userId),
-          orderBy('createdAt', 'desc')
-        );
+        // Query Firestore for all jobs belonging to the current user
+        const jobsRef = collection(db, 'jobs');
+        const q = query(jobsRef, where('userId', '==', userId));
         const querySnapshot = await getDocs(q);
-        return querySnapshot.docs.map(doc => ({
+        
+        // Convert the query snapshot to an array of jobs
+        const jobs = querySnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         }));
+  
+        // Convert Firestore Timestamps to regular dates for easier handling
+        return jobs.map(job => ({
+          ...job,
+          createdAt: job.createdAt?.toDate(),
+          updatedAt: job.updatedAt?.toDate()
+        }));
       } catch (error) {
-        console.error('Error getting jobs:', error);
+        console.error('Error fetching jobs:', error);
         throw error;
       }
     },
   
-    // Update a job
+    async addJob(jobData) {
+      try {
+        const userId = auth.currentUser?.uid;
+        if (!userId) throw new Error('User not authenticated');
+  
+        // Prepare the job data with timestamps and user ID
+        const newJob = {
+          ...jobData,
+          userId,
+          status: jobData.status || 'applied',
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        };
+  
+        // Add the document to Firestore
+        const jobsRef = collection(db, 'jobs');
+        const docRef = await addDoc(jobsRef, newJob);
+  
+        // Return the new job with its ID
+        return {
+          id: docRef.id,
+          ...newJob,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+      } catch (error) {
+        console.error('Error adding job:', error);
+        throw error;
+      }
+    },
+  
     async updateJob(jobId, updates) {
       try {
+        const userId = auth.currentUser?.uid;
+        if (!userId) throw new Error('User not authenticated');
+  
+        // Get reference to the job document
         const jobRef = doc(db, 'jobs', jobId);
-        await updateDoc(jobRef, updates);
-        return { id: jobId, ...updates };
+  
+        // Prepare updates with timestamp
+        const updatedData = {
+          ...updates,
+          updatedAt: serverTimestamp()
+        };
+  
+        // Update the document in Firestore
+        await updateDoc(jobRef, updatedData);
+  
+        // Return the updated data
+        return {
+          id: jobId,
+          ...updates,
+          updatedAt: new Date()
+        };
       } catch (error) {
         console.error('Error updating job:', error);
         throw error;
       }
     },
   
-    // Delete a job
     async deleteJob(jobId) {
       try {
-        await deleteDoc(doc(db, 'jobs', jobId));
-        return jobId;
+        const userId = auth.currentUser?.uid;
+        if (!userId) throw new Error('User not authenticated');
+  
+        // Delete the document from Firestore
+        const jobRef = doc(db, 'jobs', jobId);
+        await deleteDoc(jobRef);
+        
+        return true;
       } catch (error) {
         console.error('Error deleting job:', error);
-        throw error;
-      }
-    },
-  
-    // Get job statistics
-    async getJobStats(userId) {
-      try {
-        const jobs = await this.getUserJobs(userId);
-        return {
-          total: jobs.length,
-          applied: jobs.filter(job => job.status === 'Applied').length,
-          interview: jobs.filter(job => job.status === 'Interview').length,
-          offer: jobs.filter(job => job.status === 'Offer').length,
-          rejected: jobs.filter(job => job.status === 'Rejected').length
-        };
-      } catch (error) {
-        console.error('Error getting job stats:', error);
         throw error;
       }
     }

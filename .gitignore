@@ -66,4 +66,5 @@ Thumbs.db
 .npm
 
 # Optional eslint cache
-.eslintcache
+.eslintcache.env
+.env
