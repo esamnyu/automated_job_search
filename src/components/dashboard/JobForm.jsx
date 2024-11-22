@@ -1,110 +1,117 @@
-// src/components/dashboard/JobForm.jsx
+// components/dashboard/JobForm.jsx
 import React, { useState } from 'react';
 import Card from '../ui/Card';
+import Button from '../ui/Button';
+import Alert from '../ui/Alert';
 
-const JobForm = ({ onSubmit, onCancel }) => {
+const JobForm = ({ onSubmit, onClose }) => {
   const [formData, setFormData] = useState({
+    title: '',
     company: '',
-    position: '',
-    status: 'Applied',
-    appliedDate: new Date().toISOString().split('T')[0]
+    description: '',
+    requirements: '',
+    status: 'applied',
   });
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    try {
+      await onSubmit(formData);
+      setFormData({
+        title: '',
+        company: '',
+        description: '',
+        requirements: '',
+        status: 'applied',
+      });
+      if (onClose) onClose(); // Close the form after submission if onClose is provided
+    } catch (err) {
+      console.error('Error submitting form:', err);
+      setError(err.message || 'An error occurred while submitting the form.');
+    }
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   return (
-    <Card>
-      <form onSubmit={handleSubmit}>
-        <div className="space-y-4">
-          <div>
-            <label htmlFor="company" className="block text-sm font-medium text-gray-700">
-              Company
-            </label>
-            <input
-              type="text"
-              id="company"
-              name="company"
-              value={formData.company}
-              onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              required
-            />
-          </div>
-
-          <div>
-            <label htmlFor="position" className="block text-sm font-medium text-gray-700">
-              Position
-            </label>
-            <input
-              type="text"
-              id="position"
-              name="position"
-              value={formData.position}
-              onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              required
-            />
-          </div>
-
-          <div>
-            <label htmlFor="status" className="block text-sm font-medium text-gray-700">
-              Status
-            </label>
-            <select
-              id="status"
-              name="status"
-              value={formData.status}
-              onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            >
-              <option value="Applied">Applied</option>
-              <option value="Interview">Interview</option>
-              <option value="Offer">Offer</option>
-              <option value="Rejected">Rejected</option>
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="appliedDate" className="block text-sm font-medium text-gray-700">
-              Applied Date
-            </label>
-            <input
-              type="date"
-              id="appliedDate"
-              name="appliedDate"
-              value={formData.appliedDate}
-              onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              required
-            />
-          </div>
-
-          <div className="flex justify-end space-x-3 mt-6">
-            <button
-              type="button"
-              onClick={onCancel}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-            >
+    <Card className="p-6">
+      <h2 className="text-xl font-semibold mb-4">Add New Job Application</h2>
+      {error && (
+        <Alert variant="error" onClose={() => setError('')}>
+          {error}
+        </Alert>
+      )}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Job Title</label>
+          <input
+            type="text"
+            name="title"
+            value={formData.title}
+            onChange={handleChange}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Company</label>
+          <input
+            type="text"
+            name="company"
+            value={formData.company}
+            onChange={handleChange}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Description</label>
+          <textarea
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+            rows={3}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Requirements</label>
+          <textarea
+            name="requirements"
+            value={formData.requirements}
+            onChange={handleChange}
+            rows={3}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Status</label>
+          <select
+            name="status"
+            value={formData.status}
+            onChange={handleChange}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          >
+            <option value="applied">Applied</option>
+            <option value="interview">Interview</option>
+            <option value="offer">Offer</option>
+            <option value="rejected">Rejected</option>
+          </select>
+        </div>
+        <div className="flex justify-end space-x-2">
+          {onClose && (
+            <Button variant="secondary" onClick={onClose}>
               Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
-            >
-              Save Application
-            </button>
-          </div>
+            </Button>
+          )}
+          <Button type="submit">Add Job Application</Button>
         </div>
       </form>
     </Card>

@@ -1,6 +1,5 @@
-// src/contexts/AuthContext.jsx
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { 
+import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
@@ -11,44 +10,100 @@ import { auth } from '../firebase';
 const AuthContext = createContext();
 
 export const useAuth = () => {
-  return useContext(AuthContext);
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };
 
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  console.log('AuthProvider rendering, currentUser:', currentUser, 'loading:', loading);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
-      setLoading(false);
-    });
+    console.log('Setting up auth state listener');
+    
+    const unsubscribe = onAuthStateChanged(auth, 
+      (user) => {
+        console.log('Auth state changed:', user ? 'User logged in' : 'No user');
+        setCurrentUser(user);
+        setLoading(false);
+        setError(null);
+      }, 
+      (error) => {
+        console.error('Auth state change error:', error);
+        setError(error.message);
+        setLoading(false);
+      }
+    );
 
-    return unsubscribe;
+    return () => {
+      console.log('Cleaning up auth state listener');
+      unsubscribe();
+    };
   }, []);
 
-  const signup = (email, password) => {
-    return createUserWithEmailAndPassword(auth, email, password);
+  const signup = async (email, password) => {
+    try {
+      setError(null);
+      const result = await createUserWithEmailAndPassword(auth, email, password);
+      console.log('Signup successful');
+      return result;
+    } catch (error) {
+      console.error('Signup error:', error);
+      setError(error.message);
+      throw error;
+    }
   };
 
-  const login = (email, password) => {
-    return signInWithEmailAndPassword(auth, email, password);
+  const login = async (email, password) => {
+    try {
+      setError(null);
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      console.log('Login successful');
+      return result;
+    } catch (error) {
+      console.error('Login error:', error);
+      setError(error.message);
+      throw error;
+    }
   };
 
-  const logout = () => {
-    return signOut(auth);
+  const logout = async () => {
+    try {
+      setError(null);
+      await signOut(auth);
+      console.log('Logout successful');
+    } catch (error) {
+      console.error('Logout error:', error);
+      setError(error.message);
+      throw error;
+    }
   };
 
   const value = {
     currentUser,
+    loading,
+    error,
     login,
     signup,
-    logout
+    logout,
+    setError
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {loading ? (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        </div>
+      ) : (
+        children
+      )}
     </AuthContext.Provider>
   );
 };

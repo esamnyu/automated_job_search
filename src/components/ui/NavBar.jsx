@@ -1,33 +1,91 @@
 // src/components/ui/NavBar.jsx
 import React from 'react';
-import { Briefcase, Plus } from 'lucide-react';
-import Button from './Button';  // This should work once Button.jsx is in the same directory
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
-const Navbar = ({ onAddJob }) => {
+export default function NavBar() {
+  const { currentUser, logout } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Failed to log out:', error);
+    }
+  };
+
   return (
-    <nav className="bg-white shadow">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex items-center">
-            <Briefcase className="h-6 w-6 text-blue-600" />
-            <span className="ml-2 text-xl font-semibold text-gray-900">
-              Job Search Dashboard
-            </span>
-          </div>
-          <div className="flex items-center">
-            <Button
-              onClick={onAddJob}
-              variant="primary"
-              className="flex items-center"
-            >
-              <Plus className="h-5 w-5 mr-1" />
-              Add Job
-            </Button>
+    <nav className="bg-white shadow-lg">
+      <div className="container mx-auto px-4">
+        <div className="flex justify-between items-center h-16">
+          {/* Brand/Logo */}
+          <Link to="/" className="flex items-center space-x-3">
+            <span className="text-xl font-bold text-gray-800">Job Search Dashboard</span>
+          </Link>
+
+          {/* Debug Info - only in development */}
+          {import.meta.env.DEV && (
+            <div className="text-xs text-gray-500">
+              Current path: {location.pathname}
+            </div>
+          )}
+
+          {/* Navigation Links */}
+          <div className="flex items-center space-x-4">
+            {currentUser ? (
+              <>
+                <Link
+                  to="/"
+                  className={`px-3 py-2 rounded-md text-sm font-medium ${
+                    location.pathname === '/' 
+                      ? 'bg-gray-100 text-gray-900' 
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Dashboard
+                </Link>
+                <div className="flex items-center space-x-4">
+                  <span className="text-sm text-gray-600">
+                    {currentUser.email}
+                  </span>
+                  <button
+                    onClick={handleLogout}
+                    className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors"
+                  >
+                    Logout
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  className={`px-3 py-2 rounded-md text-sm font-medium ${
+                    location.pathname === '/login'
+                      ? 'bg-gray-100 text-gray-900'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Login
+                </Link>
+                <Link
+                  to="/signup"
+                  className={`${
+                    location.pathname === '/signup'
+                      ? 'bg-blue-600'
+                      : 'bg-blue-500 hover:bg-blue-600'
+                  } text-white px-4 py-2 rounded-md transition-colors`}
+                >
+                  Sign Up
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>
     </nav>
   );
-};
-
-export default Navbar;
+}

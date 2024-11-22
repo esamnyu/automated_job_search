@@ -2,8 +2,10 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
-import { getAnalytics } from 'firebase/analytics';
+// Import getAnalytics only if you're using it
+// import { getAnalytics } from 'firebase/analytics';
 
+// Firebase configuration object
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -11,26 +13,30 @@ const firebaseConfig = {
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
+  // measurementId is optional and only needed if you're using analytics
+  // measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
-// Debug log
-console.log('Firebase Config:', {
-  apiKey: firebaseConfig.apiKey ? 'Present' : 'Missing',
-  authDomain: firebaseConfig.authDomain ? 'Present' : 'Missing',
-  projectId: firebaseConfig.projectId ? 'Present' : 'Missing',
-  storageBucket: firebaseConfig.storageBucket ? 'Present' : 'Missing',
-  messagingSenderId: firebaseConfig.messagingSenderId ? 'Present' : 'Missing',
-  appId: firebaseConfig.appId ? 'Present' : 'Missing',
-  measurementId: firebaseConfig.measurementId ? 'Present' : 'Missing'
-});
+// Debug log (only in development)
+if (import.meta.env.DEV) {
+  console.log('Firebase Config:', {
+    apiKey: firebaseConfig.apiKey ? 'Present' : 'Missing',
+    authDomain: firebaseConfig.authDomain ? 'Present' : 'Missing',
+    projectId: firebaseConfig.projectId ? 'Present' : 'Missing',
+    storageBucket: firebaseConfig.storageBucket ? 'Present' : 'Missing',
+    messagingSenderId: firebaseConfig.messagingSenderId ? 'Present' : 'Missing',
+    appId: firebaseConfig.appId ? 'Present' : 'Missing',
+    // measurementId: firebaseConfig.measurementId ? 'Present' : 'Missing'
+  });
+}
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Initialize services
+// Initialize Firebase services
 export const auth = getAuth(app);
 export const db = getFirestore(app);
-export const analytics = getAnalytics(app);
+// Initialize analytics only if you're using it
+// export const analytics = getAnalytics(app);
 
 export default app;

@@ -1,9 +1,12 @@
-// src/components/ui/Card.jsx
+// components/ui/Card.jsx
 import React from 'react';
 
-const Card = ({ children, className = '' }) => {
+const Card = ({ children, className = '', ...props }) => {
   return (
-    <div className={`bg-white shadow-sm rounded-lg p-6 ${className}`}>
+    <div
+      className={`bg-white shadow rounded-lg ${className}`}
+      {...props}
+    >
       {children}
     </div>
   );
